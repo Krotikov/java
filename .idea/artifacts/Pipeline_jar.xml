@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Pipeline:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Pipeline_jar</output-path>
+    <root id="archive" name="Pipeline.jar">
+      <element id="module-output" name="Pipeline" />
+      <element id="module-output" name="Reader" />
+      <element id="module-output" name="Writer" />
+      <element id="module-output" name="Manager" />
+      <element id="module-output" name="Executor" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/PipelineInterfaces.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

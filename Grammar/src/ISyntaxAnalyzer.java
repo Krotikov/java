@@ -1,0 +1,2 @@
+public interface ISyntaxAnalyzer {
+}

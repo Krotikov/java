@@ -1,0 +1,8 @@
+InputFile=files/coded.bin
+OutputFile=files/decoded.txt
+ReaderClassName=Reader
+WriterClassName=Writer
+ExecutorClassName=Executor
+ReaderConfigFile=configs/configForReader.txt
+WriterConfigFile=configs/configForWriter.txt
+ExecutorConfigFile=configs/configForExecutor.txt
