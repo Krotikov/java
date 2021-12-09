@@ -1,3 +1,5 @@
+package krotikov;
+
 import java.nio.ByteBuffer;
 
 public class Encoder {

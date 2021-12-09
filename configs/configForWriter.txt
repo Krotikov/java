@@ -1,1 +1,1 @@
-BufferSize=16
+BufferSize=13

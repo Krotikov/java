@@ -1,8 +1,8 @@
 InputFile=files/coded.bin
 OutputFile=files/decoded.txt
-ReaderClassName=Reader
-WriterClassName=Writer
-ExecutorClassName=Executor
+ReaderClassName=krotikov.Reader
+WriterClassName=krotikov.Writer
+ExecutorClassName=krotikov.Executor
 ReaderConfigFile=configs/configForReader.txt
 WriterConfigFile=configs/configForWriter.txt
 ExecutorConfigFile=configs/configForExecutor.txt

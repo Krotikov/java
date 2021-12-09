@@ -1,13 +1,37 @@
-import com.java_polytech.pipeline_interfaces.IExecutor;
-import com.java_polytech.pipeline_interfaces.IReader;
-import com.java_polytech.pipeline_interfaces.IWriter;
-import com.java_polytech.pipeline_interfaces.RC;
-
+import com.java_polytech.pipeline_interfaces.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import configKrot.*;
 
 public class Manager {
+    private class ManagerGrammar extends Grammar{
+        static final String inFile = "InputFile";
+        static final String outFile = "OutputFile";
+        static final String readerClassName = "ReaderClassName";
+        static final String writerClassName = "WriterClassName";
+        static final String executorClassName = "ExecutorClassName";
+        static final String readerConfigFile = "ReaderConfigFile";
+        static final String writerConfigFile = "WriterConfigFile";
+        static final String executorConfigFile = "ExecutorConfigFile";
+
+        @Override
+        protected void setGrammar(){
+            this.grammarList.add(inFile);
+            this.grammarList.add(outFile);
+            this.grammarList.add(readerClassName);
+            this.grammarList.add(writerClassName);
+            this.grammarList.add(executorClassName);
+            this.grammarList.add(readerConfigFile);
+            this.grammarList.add(writerConfigFile);
+            this.grammarList.add(executorConfigFile);
+        }
+    }
+
     IReader reader;
     IWriter writer;
     IExecutor executor;
@@ -40,17 +64,24 @@ public class Manager {
         }
     }
 
-    RC SetConfig(String configName){
-        MConfig config = new MConfig();
-        RC rc = config.readConfig(configName);
-        if(!rc.isSuccess())
+    public RC setConfig(String configName){
+        Grammar grammar = new ManagerGrammar();
+        ConfigAnalyzer confAnal = new ConfigAnalyzer(configName, grammar, RC.RCWho.MANAGER);
+        RC rc = confAnal.ReadConfig();
+
+        if (!rc.isSuccess())
             return rc;
 
-        params = new PipelineParams(config.inputFile, config.outputFile, config.readerClassName,
-                config.writerClassName, config.executorClassName, config.readerConfigFile,
-                config.writerConfigFile, config.executorConfigFile);
+        params = new PipelineParams(confAnal.configElements.get(ManagerGrammar.inFile),
+                confAnal.configElements.get(ManagerGrammar.outFile),
+                confAnal.configElements.get(ManagerGrammar.readerClassName),
+                confAnal.configElements.get(ManagerGrammar.writerClassName),
+                confAnal.configElements.get(ManagerGrammar.executorClassName),
+                confAnal.configElements.get(ManagerGrammar.readerConfigFile),
+                confAnal.configElements.get(ManagerGrammar.writerConfigFile),
+                confAnal.configElements.get(ManagerGrammar.executorConfigFile));
 
-        return rc;
+        return RC.RC_SUCCESS;
     }
 
     RC CheckParams(){
@@ -102,6 +133,7 @@ public class Manager {
 
     RC GetClassesByName(){
         Class<?> tmp;
+        //reader
         try{
             tmp = Class.forName(params.readerClassName);
             if(IReader.class.isAssignableFrom(tmp))
@@ -112,7 +144,7 @@ public class Manager {
         }catch(Exception e) {
             return RC.RC_MANAGER_INVALID_READER_CLASS;
         }
-
+        //writer
         try {
             tmp = Class.forName(params.writerClassName);
             if (IWriter.class.isAssignableFrom(tmp))
@@ -123,7 +155,7 @@ public class Manager {
         catch (Exception e) {
             return RC.RC_MANAGER_INVALID_WRITER_CLASS;
         }
-
+        //executor
         try {
             tmp = Class.forName(params.executorClassName);
             if (IExecutor.class.isAssignableFrom(tmp))
@@ -138,9 +170,25 @@ public class Manager {
         return RC.RC_SUCCESS;
     }
 
+    private RC SetConfigsToClasses() {
+        RC rc;
+        rc = reader.setConfig(params.readerConfigFile);
+        // !(rc = reader.setConfig(params.readerConfigFile)).isSuccess()
+        if (rc != RC.RC_SUCCESS)
+            return rc;
+
+        if (!(rc = writer.setConfig(params.writerConfigFile)).isSuccess())
+            return rc;
+
+        if (!(rc = executor.setConfig(params.executorConfigFile)).isSuccess())
+            return rc;
+
+        return RC.RC_SUCCESS;
+    }
+
     RC Run(String configName){
         RC rc;
-        rc = SetConfig(configName);
+        rc = setConfig(configName);
         if(!rc.isSuccess()){
             return rc;
         }
@@ -155,17 +203,19 @@ public class Manager {
             return rc;
         if (!(rc = executor.setConsumer(writer)).isSuccess())
             return rc;
-        if (!(rc = reader.setConfig(params.readerConfigFile)).isSuccess())
-            return rc;
-        if (!(rc = executor.setConfig(params.executorConfigFile)).isSuccess())
-            return rc;
-        if (!(rc = writer.setConfig(params.writerConfigFile)).isSuccess())
-            return rc;
+
+
         if (!(rc = reader.setInputStream(inStream)).isSuccess())
             return rc;
         if (!(rc = writer.setOutputStream(outStream)).isSuccess())
             return rc;
 
+        rc = SetConfigsToClasses();
+        // !(rc = SetConfigsToClasses()).isSuccess()
+        if (rc != RC.RC_SUCCESS)
+            return rc;
+
+        // start pipeline
         rc = reader.run();
         if(!rc.isSuccess())
             return rc;

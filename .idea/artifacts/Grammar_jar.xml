@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Grammar:jar">
+    <output-path>$PROJECT_DIR$/artifacts</output-path>
+    <root id="archive" name="Grammar.jar">
+      <element id="module-output" name="Grammar" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../PipelineInterfaces.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

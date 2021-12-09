@@ -1,3 +1,5 @@
+package krotikov;
+
 import com.java_polytech.pipeline_interfaces.IConsumer;
 import com.java_polytech.pipeline_interfaces.IReader;
 import com.java_polytech.pipeline_interfaces.RC;
@@ -5,30 +7,22 @@ import com.java_polytech.pipeline_interfaces.RC;
 import java.io.IOException;
 import java.io.InputStream;
 
+import configKrot.*;
+
 public class Reader implements IReader {
-    InputStream inStream;
-    byte[] buffer;
-    int bufSize;
-    boolean streamEnd = false; //Check of end file (true - end of fail, false - not)
-    IConsumer consumer;
-    PipelineParams params;
+    private InputStream inStream;
+    private byte[] buffer;
+    private int bufSize;
+    private boolean streamEnd = false; //Check of end file (true - end of fail, false - not)
+    private IConsumer consumer;
 
     static final int availableSize = 1000000;
-    class PipelineParams{
-        public final String BufSize;
-
-        PipelineParams(String BufSize) {
-            this.BufSize = BufSize;
+    class ReaderGrammar extends Grammar {
+        static final String bufferSize = "BufferSize";
+        @Override
+        protected void setGrammar() {
+            this.grammarList.add(bufferSize);
         }
-    }
-
-    RC CheckValidParams(){
-        int size = Integer.parseInt(params.BufSize);
-        if(size < availableSize && size > 0) {
-            bufSize = size;
-            return RC.RC_SUCCESS;
-        }
-        return RC.RC_READER_CONFIG_SEMANTIC_ERROR;
     }
 
     boolean EndFile(){
@@ -73,15 +67,30 @@ public class Reader implements IReader {
         return RC.RC_SUCCESS;
     }
 
+    RC checkValidOfBuffer(String buffer){
+        int tmpSize;
+        try{
+            tmpSize = Integer.parseInt(buffer);
+        }
+        catch (NumberFormatException ex){
+            return RC.RC_READER_CONFIG_SEMANTIC_ERROR;
+        }
+
+        if(tmpSize > 0 && tmpSize <= availableSize){
+            bufSize = tmpSize;
+        }
+        return RC.RC_SUCCESS;
+    }
+
     @Override
     public RC setConfig(String s) {
-        RConfig config = new RConfig();
-        RC rc = config.ReadConfig(s);
+        Grammar grammar = new ReaderGrammar();
+        ConfigAnalyzer confAnal = new ConfigAnalyzer(s, grammar, RC.RCWho.READER);
+        RC rc = confAnal.ReadConfig();
         if(!rc.isSuccess())
             return rc;
 
-        params = new PipelineParams(config.bufSize);
-        rc = CheckValidParams();
+        rc = checkValidOfBuffer(confAnal.configElements.get(ReaderGrammar.bufferSize));
         if(!rc.isSuccess())
             return rc;
 
